@@ -1,96 +1,76 @@
 package com.example.music_online_app;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
-import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.view.View;
-import android.widget.ScrollView;
-import android.widget.TextView;
+import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.music_online_app.adapter.CategoryAdapter;
-import com.example.music_online_app.ListenerInterface.OnCategoryClickListener;
-import com.example.music_online_app.models.CategoryModels;
-import com.facebook.shimmer.ShimmerFrameLayout;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.FirebaseFirestore;
-
-import java.util.List;
+import android.util.Log;
+import com.spotify.android.app.remote.SpotifyAppRemote;
+import com.spotify.android.appremote.api.ConnectionParams;
+import com.spotify.android.appremote.api.Connector;
+import com.spotify.protocol.client.Subscription;
+import com.spotify.protocol.types.PlayerState;
+import com.spotify.protocol.types.Track;
 
 public class MainActivity extends AppCompatActivity {
 
-    CategoryAdapter categoryAdapter;
+    private static final String CLIENT_ID = "303dfa57431e4daaa7f817297835fe8b";  // Replace with your actual Client ID
+    private static final String REDIRECT_URI = "com.yourdomain.yourapp://callback";
+    private SpotifyAppRemote mSpotifyAppRemote;
 
-    RecyclerView recyclerView;
-
-    TextView textView;
-
-    ShimmerFrameLayout shimmerFrameLayout;
-    ScrollView scrollView;
-    FirebaseAuth mAuth;
-
-
-
-    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        mAuth = FirebaseAuth.getInstance();
-
-        recyclerView = findViewById(R.id.categories_recycler_view);
-        textView = findViewById(R.id.user_name);
-        textView.setText("Xin chào " + mAuth.getCurrentUser().getEmail());
-
-        shimmerFrameLayout = findViewById(R.id.shimmer_main);
-        scrollView = findViewById(R.id.scroll_view);
-
-
-        getCategoryFromFirebase();
     }
 
-    public void getCategoryFromFirebase(){
+    @Override
+    protected void onStart() {
+        super.onStart();
+        ConnectionParams connectionParams =
+                new ConnectionParams.Builder(CLIENT_ID)
+                        .setRedirectUri(REDIRECT_URI)
+                        .showAuthView(true)
+                        .build();
 
-        turnOnShimmer(true);
-        Handler handler = new Handler();
-        handler.postDelayed(() -> {
-            turnOnShimmer(false);
-        }, 2000);
+        SpotifyAppRemote.connect(this, connectionParams,
+                new Connector.ConnectionListener() {
 
-        FirebaseFirestore.getInstance().collection("category")
-                .get().addOnSuccessListener(v -> {
-                    List<CategoryModels> categoryModels = v.toObjects(CategoryModels.class);
-                    setupCategoryRecyclerView(categoryModels);
+                    @Override
+                    public void onConnected(SpotifyAppRemote spotifyAppRemote) {
+                        mSpotifyAppRemote = spotifyAppRemote;
+                        Log.d("MainActivity", "Connected! Yay!");
+
+                        // Now you can start interacting with App Remote
+                        connected();
+                    }
+
+                    @Override
+                    public void onFailure(Throwable throwable) {
+                        Log.e("MainActivity", throwable.getMessage(), throwable);
+                    }
                 });
     }
 
-    public void setupCategoryRecyclerView(List<CategoryModels> categoryModels){
-        categoryAdapter = new CategoryAdapter(this, categoryModels, new OnCategoryClickListener() {
-            @Override
-            public void onItemClick(CategoryModels categoryModels) {
-                Intent intent = new Intent(getApplicationContext(), OnlineAlbumActivity.class);
-                intent.putExtra("category", categoryModels);
-                startActivity(intent);
-                finish();
-
-            }
-        });
-        recyclerView.setAdapter(categoryAdapter);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
-
+    @Override
+    protected void onStop() {
+        super.onStop();
+        SpotifyAppRemote.disconnect(mSpotifyAppRemote);
     }
 
-    private void turnOnShimmer(boolean turnOn){
-        if(turnOn){
-            this.shimmerFrameLayout.startShimmerAnimation();
-            this.scrollView.setVisibility(View.INVISIBLE);
-        } else {
-            this.shimmerFrameLayout.stopShimmerAnimation();
-            this.shimmerFrameLayout.setVisibility(View.INVISIBLE);
-            this.scrollView.setVisibility(View.VISIBLE);
-        }
+    private void connected() {
+        // Example: Play a playlist
+         mSpotifyAppRemote.getPlayerApi().play("spotify:playlist:37i9dQZF1DX2sUQwD7tbmL");
+
+        // Example: Subscribe to PlayerState
+        // mSpotifyAppRemote.getPlayerApi()
+        //         .subscribeToPlayerState()
+        //         .setEventCallback(playerState -> {
+        //             final Track track = playerState.track;
+        //             if (track != null) {
+        //                 Log.d("MainActivity", track.name + " by " + track.artist.name);
+        //             }
+        //         });
+
+        // Add your desired functionalities here,
+        // for example, play/pause, skip tracks, etc.
     }
 }

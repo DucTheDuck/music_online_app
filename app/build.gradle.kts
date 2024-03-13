@@ -34,6 +34,9 @@ android {
 
 dependencies {
 
+    implementation ("com.google.code.gson:gson:2.6.1")
+    implementation ("androidx.browser:browser:1.8.0")
+    implementation("com.spotify.android:spotify-app-remote:2.1.1")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
