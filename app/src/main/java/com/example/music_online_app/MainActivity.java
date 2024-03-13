@@ -4,7 +4,7 @@ import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.util.Log;
-import com.spotify.android.app.remote.SpotifyAppRemote;
+import com.spotify.android.appremote.api.SpotifyAppRemote;
 import com.spotify.android.appremote.api.ConnectionParams;
 import com.spotify.android.appremote.api.Connector;
 import com.spotify.protocol.client.Subscription;
